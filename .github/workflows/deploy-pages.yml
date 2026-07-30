@@ -7,16 +7,14 @@ on:
   workflow_dispatch:
 
 permissions:
-  contents: read
-  pages: write
-  id-token: write
+  contents: write
 
 concurrency:
-  group: pages
+  group: publish-gh-pages
   cancel-in-progress: true
 
 jobs:
-  build:
+  build-and-publish:
     runs-on: ubuntu-latest
     steps:
       - name: Check out source
@@ -38,21 +36,23 @@ jobs:
           NEXT_PUBLIC_SITE_BASE_PATH: "/-kelvin-codex-lab"
           NEXT_TELEMETRY_DISABLED: "1"
 
-      - name: Configure Pages
-        uses: actions/configure-pages@v5
+      - name: Publish the gh-pages branch
+        env:
+          GH_PAGES_DIR: ${{ runner.temp }}/gh-pages
+        run: |
+          touch out/.nojekyll
+          git fetch origin gh-pages
+          git worktree add "$GH_PAGES_DIR" origin/gh-pages
+          git -C "$GH_PAGES_DIR" rm -rf .
+          cp -R out/. "$GH_PAGES_DIR"/
+          git -C "$GH_PAGES_DIR" add -A
+          git -C "$GH_PAGES_DIR" config user.name "github-actions[bot]"
+          git -C "$GH_PAGES_DIR" config user.email "41898282+github-actions[bot]@users.noreply.github.com"
 
-      - name: Upload site artifact
-        uses: actions/upload-pages-artifact@v4
-        with:
-          path: out
+          if git -C "$GH_PAGES_DIR" diff --cached --quiet; then
+            echo "No published changes."
+            exit 0
+          fi
 
-  deploy:
-    environment:
-      name: github-pages
-      url: ${{ steps.deployment.outputs.page_url }}
-    runs-on: ubuntu-latest
-    needs: build
-    steps:
-      - name: Deploy to GitHub Pages
-        id: deployment
-        uses: actions/deploy-pages@v4
+          git -C "$GH_PAGES_DIR" commit -m "Deploy ${GITHUB_SHA::7} to GitHub Pages"
+          git -C "$GH_PAGES_DIR" push origin HEAD:gh-pages
