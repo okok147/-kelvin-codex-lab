@@ -2,7 +2,9 @@
 
 An employer-facing portfolio about one working pattern: turning fragmented information into decisions people can inspect, own, and act on.
 
-**Live site:** [kelvin-codex-lab.kelvin147789.chatgpt.site](https://kelvin-codex-lab.kelvin147789.chatgpt.site)
+**GitHub Pages:** [okok147.github.io/-kelvin-codex-lab](https://okok147.github.io/-kelvin-codex-lab/)
+
+**Original live site:** [kelvin-codex-lab.kelvin147789.chatgpt.site](https://kelvin-codex-lab.kelvin147789.chatgpt.site)
 
 ## What this project demonstrates
 
@@ -74,6 +76,10 @@ npm test
 ```
 
 `npm test` performs a production build, validates the hosting artifact, renders both routes, and checks the employer-proof and evidence-classification landmarks.
+
+## Deployment
+
+Every push to `main` builds a static export and deploys it through GitHub Actions to GitHub Pages.
 
 ## Built with
 
