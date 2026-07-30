@@ -14,8 +14,8 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Codex Project & UI Lab",
-  description: "展示 Codex 專案、可重用 UI 元件與持續擴充方法的作品系統。",
+  title: "Kelvin Lau — Systems & UI Portfolio",
+  description: "把零散訊息轉化成可以追蹤、執行與交接的系統：Kelvin Lau 的 ClearLoop、工作流與 UI/UX 作品集。",
   other: {
     "codex-preview": "development",
   },
