@@ -29,5 +29,24 @@ test("renders development preview metadata", async () => {
     response.headers.get("content-type") ?? "",
     /^text\/html\b/i,
   );
-  assert.match(await response.text(), developmentPreviewMeta);
+  const html = await response.text();
+  assert.match(html, developmentPreviewMeta);
+  assert.match(html, /data-scene="OPENING"/);
+  assert.match(html, /Five deliberate steps\./);
+  assert.match(html, /data-scene="PROOF LEDGER"/);
+  assert.match(html, /REAL FIELD CASE/);
+  assert.match(html, /data-scene="CASE ATLAS"/);
+  assert.match(html, /data-scene="ROLE FIT"/);
+  assert.match(html, /VIEW PUBLIC SOURCE/);
+  assert.match(html, /PLAY THE TRANSFORMATION/);
+
+  const clearLoopResponse = await worker.fetch(
+    new Request("http://localhost/clearloop", { headers: { accept: "text/html" } }),
+    { ASSETS: { fetch: async () => new Response("Not found", { status: 404 }) } },
+    { waitUntil() {}, passThroughOnException() {} },
+  );
+  assert.equal(clearLoopResponse.status, 200);
+  const clearLoopHtml = await clearLoopResponse.text();
+  assert.match(clearLoopHtml, /CONTROLLED DEMO/);
+  assert.match(clearLoopHtml, /REAL \/ ANONYMIZED/);
 });

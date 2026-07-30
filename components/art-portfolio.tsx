@@ -3,6 +3,12 @@
 import { useEffect, useMemo, useState, type CSSProperties, type PointerEvent } from "react";
 import { categoryFilters, projects, type ProjectCategory } from "@/lib/portfolio";
 import { FieldCaseStudy } from "@/components/field-case-study";
+import { CaseAtlas } from "@/components/case-atlas";
+import { EmployerProofMode } from "@/components/employer-proof-mode";
+import { AuteurMotion } from "@/components/auteur-motion";
+import { OutcomeLedger } from "@/components/outcome-ledger";
+import { RoleFit } from "@/components/role-fit";
+import { sitePath } from "@/lib/site-path";
 import styles from "@/app/art-portfolio.module.css";
 
 type Filter = "all" | ProjectCategory;
@@ -69,30 +75,33 @@ export function ArtPortfolio() {
     event.preventDefault();
     if (entering) return;
     setEntering(true);
-    window.setTimeout(() => { window.location.href = "/clearloop?demo=1"; }, 1550);
+    window.setTimeout(() => { window.location.href = sitePath("/clearloop?demo=1"); }, 1550);
   }
 
   return (
     <main className={join(styles.artSite, ready && styles.ready, entering && styles.entering)}>
-      <section className={styles.hero} id="top" onPointerMove={moveSignalField}>
+      <AuteurMotion />
+      <a className={styles.skipLink} href="#employer-mode">Skip to employer proof</a>
+      <section className={styles.hero} id="top" onPointerMove={moveSignalField} data-scene="OPENING">
         <div className={styles.gridLines} aria-hidden="true" />
         <header className={styles.heroNav}>
-          <a className={styles.brand} href="#top"><span>K/C</span> CODEX LAB</a>
-          <div className={styles.systemId}><i /> SYS: CLEARLOOP v1.1</div>
+          <a className={styles.brand} href="#top"><span>K/C</span> KELVIN LAU / CODEX LAB</a>
+          <div className={styles.systemId}><i /> CLEARLOOP / PORTFOLIO V13</div>
           <nav aria-label="Main navigation">
-            <a href="#work">WORK</a><a href="#case-study">CASE</a><a href="/clearloop">CLEARLOOP</a><a href="#system">SYSTEM</a>
+            <a href="#employer-mode">PROOF</a><a href="#cases">CASES</a><a href="#role-fit">ROLE FIT</a><a href={sitePath("/clearloop")}>DEMO</a>
           </nav>
           <div className={styles.liveSignal}><i /> LIVE {time}<small>UTC+08:00</small></div>
         </header>
 
         <div className={styles.heroStatement}>
-          <p>PORTFOLIO SYSTEM / 2026</p>
+          <p>WORKFLOW SYSTEMS PORTFOLIO / HONG KONG / 2026</p>
           <h1><span>I TURN CHAOS</span><span>INTO SYSTEMS.</span></h1>
-          <h2>把混亂變成可以追蹤的秩序。</h2>
-          <a className={styles.enterCta} href="/clearloop?demo=1" onClick={enterClearLoop}>
+          <h2><span>From fragmented input to decisions people can act on.</span><small>把混亂變成可以追蹤、執行與交接的秩序。</small></h2>
+          <a className={styles.enterCta} href={sitePath("/clearloop?demo=1")} onClick={enterClearLoop}>
             <span>✦</span><strong>{entering ? "ALIGNING SIGNALS…" : "ENTER CLEARLOOP"}</strong><i>→</i>
           </a>
-          <div className={styles.heroCount}><strong>05</strong> PROJECT SYSTEMS <i>/</i> <strong>01</strong> LIVE DEMO</div>
+          <a className={styles.proofCta} href="#employer-mode" onClick={() => window.dispatchEvent(new Event("start-employer-proof"))}><span>45s</span><strong>PLAY EMPLOYER REVIEW</strong><i>↓</i></a>
+          <div className={styles.heroCount}><strong>01</strong> REAL FIELD CASE <i>/</i> <strong>06</strong> TRACEABLE RECORDS <i>/</i> <strong>05</strong> SYSTEMS</div>
         </div>
 
         <div className={styles.signalField} aria-label="Scattered messages converge into an audit trail">
@@ -126,7 +135,7 @@ export function ArtPortfolio() {
               <strong>{row[0]}</strong><time>2026.07.10<br />{row[1]}</time><div><span>{row[2]}</span><small>{row[3]}</small></div><i />
             </div>
           ))}
-          <a className={styles.archiveLink} href="/clearloop?demo=1" onClick={enterClearLoop}><span>▣</span><strong>CONTINUOUS RECORD<small>EVERY CHANGE. TRACEABLE.</small></strong><i>→</i></a>
+          <a className={styles.archiveLink} href={sitePath("/clearloop?demo=1")} onClick={enterClearLoop}><span>▣</span><strong>CONTINUOUS RECORD<small>EVERY CHANGE. TRACEABLE.</small></strong><i>→</i></a>
         </aside>
 
         <div className={styles.heroRail}>
@@ -135,9 +144,13 @@ export function ArtPortfolio() {
         <div className={styles.transitionWipe} aria-hidden="true"><span>CHAOS</span><i>→</i><strong>CLARITY</strong></div>
       </section>
 
-      <section className={styles.workSection} id="work">
+      <EmployerProofMode />
+
+      <OutcomeLedger />
+
+      <section className={styles.workSection} id="work" data-scene="PROJECTS" data-reveal>
         <div className={styles.sectionIntro}>
-          <div><p>01 / PROJECT ARCHIVE</p><h2>Every project leaves<br />a stronger system behind.</h2></div>
+          <div><p>02 / PROJECT ARCHIVE</p><h2>Every project leaves<br />a stronger system behind.</h2></div>
           <p>每個作品不只交付畫面，也抽出可重用元件、決策框架和下一次建構的起點。</p>
         </div>
         <div className={styles.projectFilters} role="group" aria-label="Filter projects">
@@ -153,16 +166,18 @@ export function ArtPortfolio() {
               <div className={styles.projectMeta}><span>{project.status}</span><small>{project.tags.join(" / ")}</small></div>
               <i>↗</i>
             </>;
-            return project.href ? <a className={styles.projectRow} href={project.href} key={project.id}>{content}</a> : <article className={styles.projectRow} key={project.id} style={{ "--row-index": index } as CSSProperties}>{content}</article>;
+            return project.href ? <a className={styles.projectRow} href={sitePath(project.href)} key={project.id} style={{ "--row-delay": `${index * 65}ms` } as CSSProperties}>{content}</a> : <article className={styles.projectRow} key={project.id} style={{ "--row-delay": `${index * 65}ms` } as CSSProperties}>{content}</article>;
           })}
         </div>
       </section>
 
+      <CaseAtlas />
+
       <FieldCaseStudy />
 
-      <section className={styles.dnaSection} id="system">
+      <section className={styles.dnaSection} id="system" data-scene="SYSTEM DNA" data-reveal>
         <div className={styles.dnaHeader}>
-          <p>03 / SYSTEM DNA</p><h2>One visual language.<br />Many operational forms.</h2>
+          <p>05 / SYSTEM DNA</p><h2>One visual language.<br />Many operational forms.</h2>
         </div>
         <div className={styles.dnaLab}>
           <nav aria-label="System DNA preview">
@@ -178,8 +193,10 @@ export function ArtPortfolio() {
         </div>
       </section>
 
-      <section className={styles.manifestoSection} id="about">
-        <p>04 / OPERATING PRINCIPLES</p>
+      <RoleFit />
+
+      <section className={styles.manifestoSection} id="about" data-scene="PRINCIPLES" data-reveal>
+        <p>07 / OPERATING PRINCIPLES</p>
         <div className={styles.manifestoGrid}>
           <h2>THE RULES<br />BEHIND THE<br /><span>SYSTEM.</span></h2>
           <div>{principles.map((principle) => <article key={principle[0]}><span>{principle[0]}</span><div><h3>{principle[1]}</h3><p>{principle[2]}</p></div></article>)}</div>
@@ -191,6 +208,13 @@ export function ArtPortfolio() {
         <p>BUILD ONCE. EXTRACT THE PATTERN. COMPOUND THE VALUE.</p>
         <a href="#top">BACK TO SIGNAL ↑</a>
       </footer>
+
+      <nav className={styles.mobileDock} aria-label="Mobile quick navigation">
+        <a href="#employer-mode" onClick={() => window.dispatchEvent(new Event("start-employer-proof"))}><span>45s</span>PROOF</a>
+        <a href="#cases"><span>06</span>CASES</a>
+        <a href={sitePath("/clearloop?demo=1")}><span>▶</span>DEMO</a>
+        <a href="https://github.com/okok147/-kelvin-codex-lab" target="_blank" rel="noreferrer"><span>↗</span>SOURCE</a>
+      </nav>
     </main>
   );
 }

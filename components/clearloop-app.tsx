@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
+import Link from "next/link";
 import { demoRecords, type ActionStatus, type SourceItem } from "@/lib/clearloop-data";
 import styles from "@/app/clearloop/clearloop.module.css";
 
@@ -126,20 +127,22 @@ export function ClearLoopApp() {
   });
 
   useEffect(() => {
-    const storedUpdates = window.localStorage.getItem("clearloop-updates");
-    const storedActions = window.localStorage.getItem("clearloop-actions");
-    if (storedUpdates) setCapturedUpdates(JSON.parse(storedUpdates));
-    if (storedActions) setCompletedActions(JSON.parse(storedActions));
-    const params = new URLSearchParams(window.location.search);
-    const requestedCase = params.get("case");
-    if (requestedCase && demoRecords.some((record) => record.id === requestedCase)) {
-      const record = demoRecords.find((item) => item.id === requestedCase);
-      setSelectedId(requestedCase);
-      setSourceFocus(record?.sources[0]?.id ?? "");
-    }
-    const autoplay = params.get("demo") === "1";
-    const autoplayTimer = autoplay ? window.setTimeout(startMagicDemo, 1100) : undefined;
-    return () => { if (autoplayTimer) window.clearTimeout(autoplayTimer); };
+    let autoplayTimer: number | undefined;
+    const hydrateTimer = window.setTimeout(() => {
+      const storedUpdates = window.localStorage.getItem("clearloop-updates");
+      const storedActions = window.localStorage.getItem("clearloop-actions");
+      if (storedUpdates) setCapturedUpdates(JSON.parse(storedUpdates));
+      if (storedActions) setCompletedActions(JSON.parse(storedActions));
+      const params = new URLSearchParams(window.location.search);
+      const requestedCase = params.get("case");
+      if (requestedCase && demoRecords.some((record) => record.id === requestedCase)) {
+        const record = demoRecords.find((item) => item.id === requestedCase);
+        setSelectedId(requestedCase);
+        setSourceFocus(record?.sources[0]?.id ?? "");
+      }
+      autoplayTimer = params.get("demo") === "1" ? window.setTimeout(startMagicDemo, 1100) : undefined;
+    }, 0);
+    return () => { window.clearTimeout(hydrateTimer); if (autoplayTimer) window.clearTimeout(autoplayTimer); };
   }, []);
 
   const selectedRecord = useMemo(
@@ -154,15 +157,18 @@ export function ClearLoopApp() {
   const draftSummary = draft.text.trim().replace(/\s+/g, " ").slice(0, 86);
   const currentTourStep = tourStep === null ? null : tourSteps[tourStep];
   const tourTarget = currentTourStep?.target;
+  const linkedEvidence = new Set(selectedRecord.actions.flatMap((action) => action.evidence));
+  const evidenceCoverage = Math.round((linkedEvidence.size / selectedRecord.sources.length) * 100);
+  const closedActions = selectedRecord.actions.filter((action) => action.status === "Done" || completedActions.includes(action.id)).length;
+  const workflowPhase = !currentTourStep ? -1 : currentTourStep.phase.startsWith("01") ? 0 : currentTourStep.phase.startsWith("02") ? 1 : currentTourStep.phase.startsWith("03") ? 2 : 3;
 
   useEffect(() => {
     if (tourStep === null) return;
 
     const step = tourSteps[tourStep];
-    setActiveTab(step.tab);
-    if (step.source) setSourceFocus(step.source);
-
     const scrollTimer = window.setTimeout(() => {
+      setActiveTab(step.tab);
+      if (step.source) setSourceFocus(step.source);
       document.querySelector(`[data-tour="${step.target}"]`)?.scrollIntoView({ behavior: "smooth", block: "center" });
     }, 120);
 
@@ -248,10 +254,10 @@ export function ClearLoopApp() {
     <main className={styles.appShell}>
       <aside className={styles.sidebar}>
         <div>
-          <a className={styles.appBrand} href="/" aria-label="返回 Codex Lab">
+          <Link className={styles.appBrand} href="/" aria-label="返回 Codex Lab">
             <span>CL</span>
             <div><strong>ClearLoop</strong><small>Operations record system</small></div>
-          </a>
+          </Link>
 
           <nav className={styles.sideNav} aria-label="ClearLoop 功能">
             <button className={activeTab === "overview" ? styles.active : ""} onClick={() => setActiveTab("overview")} type="button">
@@ -261,7 +267,7 @@ export function ClearLoopApp() {
               <span>▤</span>Records<small>{String(demoRecords.length).padStart(2, "0")}</small>
             </button>
             <button onClick={() => { chooseRecord("CL-024"); setActiveTab("overview"); }} type="button">
-              <span>!</span>Conflicts<small>01</small>
+              <span>!</span>Conflicts<small>{String(demoRecords.filter((record) => record.conflict).length).padStart(2, "0")}</small>
             </button>
             <button className={activeTab === "audit" ? styles.active : ""} onClick={() => setActiveTab("audit")} type="button">
               <span>↺</span>Audit trail<small>12</small>
@@ -276,7 +282,7 @@ export function ClearLoopApp() {
             <p>16 of 17 actions linked to evidence</p>
           </div>
           <button onClick={resetDemo} type="button">↺ Reset demo</button>
-          <a href="/">← Back to Codex Lab</a>
+          <Link href="/">← Back to Codex Lab</Link>
         </div>
       </aside>
 
@@ -298,7 +304,7 @@ export function ClearLoopApp() {
           </div>
           <div className={styles.introAside}>
             <p>收集不同渠道的更新，找出矛盾，鎖定決定、責任人與下一步；任何人都能回看「為何這樣做」。</p>
-            <button onClick={startMagicDemo} type="button"><span>✦</span><strong>Watch clarity happen</strong><small>12 sec auto walkthrough →</small></button>
+            <button onClick={startMagicDemo} type="button"><span>✦</span><strong>Watch clarity happen</strong><small>~22 sec guided walkthrough →</small></button>
           </div>
         </div>
 
@@ -309,15 +315,15 @@ export function ClearLoopApp() {
             ["03", "Assign", "建立責任與期限"],
             ["04", "Trace", "記錄每次變更"],
           ].map((step, index) => (
-            <div key={step[0]}>
+            <div className={join(workflowPhase === index && styles.active, workflowPhase > index && styles.complete)} key={step[0]}>
               <span>{step[0]}</span><strong>{step[1]}</strong><small>{step[2]}</small>{index < 3 && <i>→</i>}
             </div>
           ))}
         </div>
 
         <div className={styles.metrics}>
-          <div><span>Open records</span><strong>03</strong><small>across 3 workstreams</small></div>
-          <div><span>Needs attention</span><strong className={styles.alertValue}>01</strong><small>date conflict detected</small></div>
+          <div><span>Case library</span><strong>{String(demoRecords.length).padStart(2, "0")}</strong><small>across 5 problem patterns</small></div>
+          <div><span>Needs attention</span><strong className={styles.alertValue}>{String(demoRecords.filter((record) => record.status === "At risk").length).padStart(2, "0")}</strong><small>active risks surfaced</small></div>
           <div><span>Closed loops</span><strong>08</strong><small>this week</small></div>
           <div><span>Unlinked actions</span><strong>01</strong><small>requires evidence</small></div>
         </div>
@@ -339,9 +345,10 @@ export function ClearLoopApp() {
                   <span>{record.id}</span>
                   <i className={join(styles.statusDot, styles[record.status.replace(" ", "").toLowerCase()])} />
                   <small>{record.status}</small>
+                  <b className={join(styles.evidenceKind, record.evidenceKind === "real" && styles.realEvidence)}>{record.evidenceKind === "real" ? "REAL / ANONYMIZED" : "CONTROLLED DEMO"}</b>
                 </div>
                 <strong>{record.title}</strong>
-                <p>{record.client}</p>
+                <p>{record.pattern} · {record.client}</p>
                 <div className={styles.recordCounts}>
                   <span>{record.inputCount} inputs</span>
                   <span className={record.conflictCount ? styles.hasConflict : ""}>{record.conflictCount} conflict</span>
@@ -355,7 +362,7 @@ export function ClearLoopApp() {
             <div className={styles.detailHead}>
               <div>
                 <div className={styles.detailMeta}>
-                  <span>{selectedRecord.id}</span><i>•</i><span>{selectedRecord.priority}</span><i>•</i><span>{selectedRecord.location}</span>
+                  <span>{selectedRecord.id}</span><i>•</i><span>{selectedRecord.priority}</span><i>•</i><span>{selectedRecord.location}</span><b className={join(styles.evidenceKind, selectedRecord.evidenceKind === "real" && styles.realEvidence)}>{selectedRecord.evidenceKind === "real" ? "REAL / ANONYMIZED" : "CONTROLLED DEMO"}</b>
                 </div>
                 <h2>{selectedRecord.title}</h2>
                 <p>{selectedRecord.client}</p>
@@ -369,6 +376,14 @@ export function ClearLoopApp() {
               <button className={activeTab === "overview" ? styles.active : ""} onClick={() => setActiveTab("overview")} role="tab" aria-selected={activeTab === "overview"} type="button">Overview</button>
               <button className={activeTab === "inputs" ? styles.active : ""} onClick={() => setActiveTab("inputs")} role="tab" aria-selected={activeTab === "inputs"} type="button">Source inputs <span>{allSources.length}</span></button>
               <button className={activeTab === "audit" ? styles.active : ""} onClick={() => setActiveTab("audit")} role="tab" aria-selected={activeTab === "audit"} type="button">Audit trail <span>{selectedRecord.timeline.length}</span></button>
+            </div>
+
+            <div className={styles.caseHealth} aria-label="Case evidence health">
+              <div><span>EVIDENCE CLASS</span><strong>{selectedRecord.evidenceKind === "real" ? "Real field case · anonymized" : "Controlled demo · simulated"}</strong></div>
+              <div><span>PROBLEM PATTERN</span><strong>{selectedRecord.pattern}</strong></div>
+              <div><span>EVIDENCE COVERAGE</span><strong>{evidenceCoverage}%</strong><i><b style={{ width: `${evidenceCoverage}%` }} /></i></div>
+              <div><span>ACTIONS CLOSED</span><strong>{closedActions}/{selectedRecord.actions.length}</strong></div>
+              <div><span>VERIFIED OUTCOME</span><strong>{selectedRecord.outcome}</strong></div>
             </div>
 
             {activeTab === "overview" && (

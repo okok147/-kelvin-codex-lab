@@ -29,7 +29,10 @@ export type TimelineEvent = {
 
 export type ClearLoopRecord = {
   id: string;
+  evidenceKind: "real" | "demo";
   title: string;
+  pattern: "Irreversible risk" | "Schedule conflict" | "Version control" | "Ownership gap" | "Resource alignment";
+  outcome: string;
   client: string;
   location: string;
   status: RecordStatus;
@@ -55,7 +58,10 @@ export type ClearLoopRecord = {
 export const demoRecords: ClearLoopRecord[] = [
   {
     id: "JOB-0018",
+    evidenceKind: "real",
     title: "雙路軌安裝現場覆核",
+    pattern: "Irreversible risk",
+    outcome: "Avoided corrective reinstall",
     client: "Anonymized field case",
     location: "Hong Kong · Residential site",
     status: "On track",
@@ -95,7 +101,10 @@ export const demoRecords: ClearLoopRecord[] = [
   },
   {
     id: "CL-024",
+    evidenceKind: "demo",
     title: "展示廳安裝次序變更",
+    pattern: "Schedule conflict",
+    outcome: "Protected both site windows",
     client: "North Point Showroom",
     location: "北角 · 2/F",
     status: "At risk",
@@ -205,7 +214,10 @@ export const demoRecords: ClearLoopRecord[] = [
   },
   {
     id: "CL-023",
+    evidenceKind: "demo",
     title: "住宅單位尺寸待確認",
+    pattern: "Irreversible risk",
+    outcome: "Stopped an incorrect cut",
     client: "Residential Fit-out",
     location: "觀塘 · Tower B",
     status: "Waiting",
@@ -235,7 +247,10 @@ export const demoRecords: ClearLoopRecord[] = [
   },
   {
     id: "CL-021",
+    evidenceKind: "demo",
     title: "物料到場及卸貨安排",
+    pattern: "Resource alignment",
+    outcome: "Aligned three dependencies",
     client: "Office Renovation",
     location: "鰂魚涌 · 18/F",
     status: "On track",
@@ -259,6 +274,59 @@ export const demoRecords: ClearLoopRecord[] = [
     timeline: [
       { time: "09:10", title: "升降機確認", detail: "建立卸貨時間窗口。", actor: "Building management", evidence: ["SRC-21"] },
       { time: "17:20", title: "所有資源完成對齊", detail: "車輛、升降機及人手均已確認。", actor: "ClearLoop", evidence: ["SRC-21", "SRC-22", "SRC-23"] },
+    ],
+  },
+  {
+    id: "CL-026", title: "報價版本與客戶批核對齊", pattern: "Version control", outcome: "Removed an obsolete version",
+    evidenceKind: "demo",
+    client: "Commercial tender · Demo case", location: "Remote coordination", status: "On track", priority: "P2", owner: "Kelvin", updated: "11 Jul · 15:06", inputCount: 5, conflictCount: 1,
+    summary: "群組仍流傳 v3 報價，但客戶 Email 已批核 v5；系統將舊版本標記為 superseded，並把採購與交付統一連到 v5。",
+    currentDecision: "只以 Q-105-v5 作為採購、排程及客戶確認依據。",
+    decisionReason: "版本名稱相似且分散於不同渠道；明確建立 superseded 關係，可防止舊價格與舊規格重新進入流程。",
+    conflict: { title: "兩個版本同時被視為 final", detail: "WhatsApp 附件標示 final_v3，Email thread 則包含已批核的 v5；若不建立版本關係，採購可能按舊規格落單。", evidence: ["VER-01", "VER-02", "VER-03"], resolved: true },
+    sources: [
+      { id: "VER-01", channel: "WhatsApp", author: "Sales group", time: "11 Jul · 09:14", text: "Please use final_v3.pdf for the order. This is the copy pinned in the group.", signal: "Request" },
+      { id: "VER-02", channel: "Email", author: "Client approver", time: "11 Jul · 10:32", text: "Q-105-v5 approved. The revised hardware and delivery split are accepted.", signal: "Confirmation" },
+      { id: "VER-03", channel: "Email", author: "Account lead", time: "11 Jul · 11:08", text: "v3 is obsolete. v5 includes the approved hardware revision and replaces all prior copies.", signal: "Change" },
+      { id: "VER-04", channel: "Site note", author: "Kelvin", time: "11 Jul · 12:20", text: "Version register updated: v3 superseded by v5. Procurement link replaced and old attachment labelled DO NOT USE.", signal: "Confirmation" },
+      { id: "VER-05", channel: "Email", author: "Procurement", time: "11 Jul · 15:06", text: "Purchase request now references Q-105-v5 and the revised hardware list.", signal: "Confirmation" },
+    ],
+    actions: [
+      { id: "VER-A1", task: "標記 v3 已失效並鎖定 v5", owner: "Kelvin", due: "Before purchase", status: "Done", evidence: ["VER-01", "VER-02", "VER-03", "VER-04"] },
+      { id: "VER-A2", task: "更新採購連結與硬件清單", owner: "Procurement", due: "11 Jul · 15:00", status: "Done", evidence: ["VER-02", "VER-05"] },
+      { id: "VER-A3", task: "通知群組唯一有效版本", owner: "Account lead", due: "11 Jul · EOD", status: "In progress", evidence: ["VER-03", "VER-04"] },
+    ],
+    timeline: [
+      { time: "09:14", title: "舊版本重新出現", detail: "群組置頂附件被誤認為最終版本。", actor: "Sales group", evidence: ["VER-01"] },
+      { time: "10:32", title: "找到正式批核證據", detail: "客戶 Email 清楚指向 Q-105-v5。", actor: "Client approver", evidence: ["VER-02"] },
+      { time: "12:20", title: "建立版本取代關係", detail: "v3 標記失效，所有執行連結轉向 v5。", actor: "Kelvin", evidence: ["VER-03", "VER-04"] },
+      { time: "15:06", title: "採購確認使用 v5", detail: "下游執行已與批核版本一致。", actor: "Procurement", evidence: ["VER-05"] },
+    ],
+  },
+  {
+    id: "CL-027", title: "臨時缺席與現場責任交接", pattern: "Ownership gap", outcome: "Restored a named owner",
+    evidenceKind: "demo",
+    client: "Service recovery · Demo case", location: "Kowloon · Active site", status: "At risk", priority: "P1", owner: "Kelvin", updated: "12 Jul · 08:48", inputCount: 4, conflictCount: 1,
+    summary: "原負責人臨時缺席，但只有『有人跟進』的模糊回覆；系統拆出開門、技術判斷及客戶更新三項責任，逐一指定 owner。",
+    currentDecision: "由 Site lead 負責進場，Kelvin 遠端處理技術確認，Account desk 於 10:30 前更新客戶。",
+    decisionReason: "『團隊會處理』不能形成責任；把交接拆成可驗證的角色與時限，才能避免現場等待及重複溝通。",
+    conflict: { title: "工作仍在進行，但沒有明確接手人", detail: "原負責人缺席後，群組只確認有人會處理，未說明誰到場、誰作技術決定、誰通知客戶。", evidence: ["OWN-01", "OWN-02", "OWN-03"], resolved: true },
+    sources: [
+      { id: "OWN-01", channel: "WhatsApp", author: "Original owner", time: "12 Jul · 07:42", text: "I cannot attend this morning. Please ask someone to cover the visit.", signal: "Change" },
+      { id: "OWN-02", channel: "WhatsApp", author: "Team group", time: "12 Jul · 07:51", text: "Someone from the team will handle it.", signal: "Confirmation" },
+      { id: "OWN-03", channel: "Call", author: "Client contact", time: "12 Jul · 08:05", text: "Please confirm who is arriving and whether the 09:30 inspection is still going ahead.", signal: "Request" },
+      { id: "OWN-04", channel: "Site note", author: "Kelvin", time: "12 Jul · 08:48", text: "Ownership split confirmed: Site lead attends; Kelvin handles technical queries; Account desk updates client by 10:30.", signal: "Confirmation" },
+    ],
+    actions: [
+      { id: "OWN-A1", task: "確認 09:30 到場及進場聯絡", owner: "Site lead", due: "12 Jul · 09:00", status: "Done", evidence: ["OWN-01", "OWN-03", "OWN-04"] },
+      { id: "OWN-A2", task: "處理現場技術判斷與照片覆核", owner: "Kelvin", due: "During visit", status: "In progress", evidence: ["OWN-04"] },
+      { id: "OWN-A3", task: "向客戶更新負責人與結果", owner: "Account desk", due: "12 Jul · 10:30", status: "Open", evidence: ["OWN-03", "OWN-04"] },
+    ],
+    timeline: [
+      { time: "07:42", title: "原負責人臨時缺席", detail: "現場工作出現 ownership gap。", actor: "Original owner", evidence: ["OWN-01"] },
+      { time: "08:05", title: "客戶要求確認接手安排", detail: "模糊交接已開始影響信任。", actor: "Client contact", evidence: ["OWN-02", "OWN-03"] },
+      { time: "08:22", title: "責任拆成三個角色", detail: "到場、技術決定與客戶更新分開指派。", actor: "Kelvin", evidence: ["OWN-04"] },
+      { time: "08:48", title: "交接紀錄完成", detail: "每個下一步都有姓名、期限與證據。", actor: "ClearLoop", evidence: ["OWN-04"] },
     ],
   },
 ];

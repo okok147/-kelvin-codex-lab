@@ -1,8 +1,9 @@
-name: Deploy website to GitHub Pages
+name: Deploy GitHub Pages
 
 on:
   push:
-    branches: [main]
+    branches:
+      - main
   workflow_dispatch:
 
 permissions:
@@ -18,65 +19,32 @@ jobs:
   build:
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout
+      - name: Check out source
         uses: actions/checkout@v4
 
-      - name: Setup Node
+      - name: Set up Node.js
         uses: actions/setup-node@v4
         with:
           node-version: 22
           cache: npm
 
-      - name: Configure Pages
-        uses: actions/configure-pages@v5
-        with:
-          enablement: true
-
       - name: Install dependencies
         run: npm ci
 
-      - name: Build static website
+      - name: Build static site
+        run: npm run build:pages
         env:
-          NEXT_PUBLIC_BASE_PATH: /${{ github.event.repository.name }}
-        run: npx next build
+          GITHUB_PAGES: "true"
+          NEXT_PUBLIC_SITE_BASE_PATH: "/-kelvin-codex-lab"
+          NEXT_TELEMETRY_DISABLED: "1"
 
-      - name: Normalize repository-subpath links
-        env:
-          REPOSITORY_NAME: ${{ github.event.repository.name }}
-        run: |
-          python <<'PY'
-          from pathlib import Path
-          import os
+      - name: Configure Pages
+        uses: actions/configure-pages@v5
 
-          out = Path("out")
-          base = f"/{os.environ['REPOSITORY_NAME']}"
-          replacements = {
-              '"/clearloop': f'"{base}/clearloop',
-              "'/clearloop": f"'{base}/clearloop",
-              'href="/"': f'href="{base}/"',
-              'href:"/"': f'href:"{base}/"',
-              '"/favicon.svg': f'"{base}/favicon.svg',
-              "'/favicon.svg": f"'{base}/favicon.svg",
-          }
-
-          for path in out.rglob("*"):
-              if not path.is_file() or path.suffix not in {".html", ".js", ".json"}:
-                  continue
-              text = path.read_text(encoding="utf-8")
-              original = text
-              for old, new in replacements.items():
-                  text = text.replace(old, new)
-              if text != original:
-                  path.write_text(text, encoding="utf-8")
-          PY
-
-      - name: Disable Jekyll processing
-        run: touch out/.nojekyll
-
-      - name: Upload Pages artifact
-        uses: actions/upload-pages-artifact@v3
+      - name: Upload site artifact
+        uses: actions/upload-pages-artifact@v4
         with:
-          path: ./out
+          path: out
 
   deploy:
     environment:

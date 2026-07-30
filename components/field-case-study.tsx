@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState, type CSSProperties } from "react";
+import { sitePath } from "@/lib/site-path";
 import styles from "@/app/art-portfolio.module.css";
 
 const stages = [
@@ -45,6 +46,8 @@ const stages = [
   },
 ] as const;
 
+const CASE_STAGE_MS = 4600;
+
 export function FieldCaseStudy() {
   const [active, setActive] = useState(0);
   const [playing, setPlaying] = useState(false);
@@ -52,25 +55,29 @@ export function FieldCaseStudy() {
   useEffect(() => {
     if (!playing) return;
     if (active >= stages.length - 1) {
-      const stop = window.setTimeout(() => setPlaying(false), 1500);
+      const stop = window.setTimeout(() => setPlaying(false), CASE_STAGE_MS);
       return () => window.clearTimeout(stop);
     }
-    const timer = window.setTimeout(() => setActive((value) => value + 1), 3200);
+    const timer = window.setTimeout(() => setActive((value) => value + 1), CASE_STAGE_MS);
     return () => window.clearTimeout(timer);
   }, [active, playing]);
 
   const stage = stages[active];
 
   function runCase() {
-    setActive(0);
+    if (playing) {
+      setPlaying(false);
+      return;
+    }
+    if (active >= stages.length - 1) setActive(0);
     setPlaying(true);
   }
 
   return (
-    <section className={styles.caseSection} id="case-study">
+    <section className={styles.caseSection} id="case-study" data-scene="FIELD CASE" data-reveal>
       <div className={styles.caseHeader}>
         <div>
-          <p>02 / FIELD CASE STUDY · ANONYMIZED</p>
+          <p>04 / FEATURED FIELD CASE · ANONYMIZED</p>
           <h2>REAL WORK.<br /><span>VISIBLE JUDGMENT.</span></h2>
         </div>
         <div className={styles.caseIntro}>
@@ -80,7 +87,7 @@ export function FieldCaseStudy() {
         </div>
       </div>
 
-      <div className={styles.caseStage} data-stage={stage.id}>
+      <div className={styles.caseStage} data-stage={stage.id} data-playing={playing ? "true" : "false"}>
         <nav aria-label="Case study stages">
           {stages.map((item, index) => (
             <button
@@ -113,10 +120,10 @@ export function FieldCaseStudy() {
         </div>
 
         <div className={styles.caseActions}>
-          <button onClick={runCase} type="button" disabled={playing}>
-            <span>✦</span>{playing ? "TRANSFORMING…" : "PLAY THE TRANSFORMATION"}
+          <button onClick={runCase} type="button" aria-pressed={playing}>
+            <span>{playing ? "Ⅱ" : "✦"}</span>{playing ? "PAUSE TRANSFORMATION" : active === stages.length - 1 ? "REPLAY THE TRANSFORMATION" : "PLAY THE TRANSFORMATION"}
           </button>
-          <a href="/clearloop?case=JOB-0018">OPEN THE TRACEABLE RECORD <span>→</span></a>
+          <a href={sitePath("/clearloop?case=JOB-0018")}>OPEN THE TRACEABLE RECORD <span>→</span></a>
         </div>
       </div>
     </section>
