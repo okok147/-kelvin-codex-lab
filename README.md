@@ -1,20 +1,23 @@
-# Kelvin Codex Lab
+# Kelvin Codex Lab — Portfolio V14
 
-An employer-facing portfolio about one working pattern: turning fragmented information into decisions people can inspect, own, and act on.
+An interactive systems and UI/UX portfolio about one working pattern: turning fragmented information into decisions people can inspect, own, and act on.
 
-**GitHub Pages:** [okok147.github.io/-kelvin-codex-lab](https://okok147.github.io/-kelvin-codex-lab/)
+**Primary site:** [kelvin-codex-lab.kelvin147789.chatgpt.site](https://kelvin-codex-lab.kelvin147789.chatgpt.site)
 
-**Original live site:** [kelvin-codex-lab.kelvin147789.chatgpt.site](https://kelvin-codex-lab.kelvin147789.chatgpt.site)
+**GitHub Pages:** [okok147.github.io/-kelvin-codex-lab/](https://okok147.github.io/-kelvin-codex-lab/)
 
 ## What this project demonstrates
 
 The portfolio is designed as evidence, not a gallery. Its opening transforms scattered messages into an audit record; the ClearLoop demo then exposes the system behind that transformation.
 
+- A selectable signal-to-record opening that demonstrates the product thesis before explaining it
 - A 45-second employer review: problem → method → evidence → role fit → next step
 - One anonymized real field case, clearly separated from controlled demo scenarios
 - Six traceable records covering irreversible risk, scheduling, version control, ownership, and resource alignment
+- A filterable Case Atlas, animated real-case transformation and role-to-evidence mapping
+- An interactive UI Lab with signal, record and action modes plus light/dark states
 - A guided ClearLoop walkthrough with source preservation, conflict detection, accountable actions, and audit history
-- Reusable editorial UI, motion, case-study, and evidence patterns
+- Responsive touch, keyboard, reduced-motion and mobile navigation behavior
 
 ## Evidence policy
 
@@ -29,27 +32,23 @@ No simulated outcome is presented as lived experience.
 
 ## Design thesis
 
-The visual system uses charcoal, warm ivory, and muted brass; typography and spacing carry the hierarchy while motion explains state change. Animation is part of the information architecture:
+V14 uses a Swiss-editorial signal system: warm paper, deep ink, ultramarine and a tightly controlled acid-lime status color. The interface treats visual design as explanation:
 
-1. scattered input converges into order;
-2. proof advances in five readable stages;
-3. interactions reveal evidence without breaking context;
-4. reduced-motion preferences remove non-essential movement.
+1. raw message slips converge into a structured audit record;
+2. blue marks decision and navigation; lime is reserved for verified state;
+3. typography creates the primary hierarchy before panels or decoration;
+4. motion explains transformation and stops when reduced motion is requested;
+5. desktop density collapses into explicit, touch-safe mobile sequences.
 
 ## Project structure
 
 ```text
 app/
   page.tsx                         Portfolio entry
-  art-portfolio.module.css         Editorial and motion system
+  portfolio-v14.module.css         V14 editorial, responsive and motion system
   clearloop/                       ClearLoop route and product styling
 components/
-  art-portfolio.tsx                Portfolio composition
-  employer-proof-mode.tsx          45-second employer review
-  outcome-ledger.tsx               Real-vs-demo proof ledger
-  case-atlas.tsx                   Filterable operational cases
-  field-case-study.tsx             Before → decision → result case
-  role-fit.tsx                     Capability-to-evidence mapping
+  portfolio-v14.tsx                V14 portfolio composition and interactions
   clearloop-app.tsx                Interactive operations-record demo
 lib/
   clearloop-data.ts                Typed case, source, action, and audit data
@@ -76,10 +75,6 @@ npm test
 ```
 
 `npm test` performs a production build, validates the hosting artifact, renders both routes, and checks the employer-proof and evidence-classification landmarks.
-
-## Deployment
-
-Every push to `main` builds a static export and deploys it through GitHub Actions to GitHub Pages.
 
 ## Built with
 
