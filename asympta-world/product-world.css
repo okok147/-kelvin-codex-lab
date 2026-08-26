@@ -1,0 +1,102 @@
+:root{
+  --product-map-paper:#EEEDE6;
+  --product-map-ink:#2B2B2B;
+  --product-map-blue:#566B9B;
+  --product-map-purple:#7655A7;
+}
+
+html,body,#app{width:100%;height:100%;overflow:hidden}
+body{background:var(--product-map-paper)}
+
+/* The product is now the local Agent economy. Keep compatibility anchors, but remove the old thought-card UI completely. */
+#nodes,#edges,#simNodes,#simEdges,#dock,.hint,#searchBox,#reset,#debug{display:none!important}
+.thought,.edge,.sim-context,.sim-edge{display:none!important}
+
+header{
+  background:rgba(242,240,232,.91)!important;
+  border-bottom-color:rgba(67,64,57,.11)!important;
+  backdrop-filter:blur(12px);
+  -webkit-backdrop-filter:blur(12px);
+}
+header .brand small{letter-spacing:.025em!important;text-transform:none!important}
+header .brand .mark{color:#6f7f9e!important}
+.presence{gap:13px!important}
+.presence-item{font-size:8px!important;letter-spacing:.045em!important;text-transform:none!important}
+.presence-item.human i{background:#96B0DA!important;border-color:#4E6495!important}
+.presence-item.agent i{background:#C0A7D9!important;border-color:#72549B!important}
+
+#viewport{
+  touch-action:none;
+  cursor:grab;
+  background-color:#EEEDE6!important;
+  background-image:
+    linear-gradient(rgba(86,107,155,.035) 1px,transparent 1px),
+    linear-gradient(90deg,rgba(86,107,155,.035) 1px,transparent 1px),
+    radial-gradient(circle at 50% 45%,rgba(255,255,255,.34),transparent 64%)!important;
+  background-size:32px 32px,32px 32px,100% 100%!important;
+}
+#viewport.map-dragging{cursor:grabbing}
+#world{transform-origin:0 0;will-change:transform}
+
+.map-home-button,.agent-demo-button{
+  height:30px;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  gap:7px;
+  padding:0 10px;
+  border:1px solid rgba(70,67,60,.09);
+  border-radius:8px;
+  background:rgba(248,247,241,.68);
+  color:#65625b;
+  font:700 8px/1 ui-monospace,SFMono-Regular,Menlo,monospace;
+  letter-spacing:.055em;
+  text-transform:uppercase;
+  cursor:pointer;
+}
+.map-home-button:hover,.map-home-button:focus-visible,.agent-demo-button:hover,.agent-demo-button:focus-visible{
+  outline:none;background:#FBF9F2;border-color:rgba(70,67,60,.18)
+}
+.map-home-button{width:31px;padding:0;font-size:14px}
+.agent-demo-button{
+  color:#514a3f;
+  background:rgba(244,232,193,.76);
+  border-color:rgba(151,112,47,.19)
+}
+.agent-demo-button::before{content:"▶";font-size:8px;color:#A36E3E}
+.agent-demo-button.running{pointer-events:none;opacity:.62}
+.agent-demo-button.running::before{content:"•••";letter-spacing:-1px}
+
+.product-map-intro{
+  position:fixed;
+  left:18px;
+  bottom:18px;
+  z-index:45;
+  max-width:255px;
+  padding:10px 12px;
+  border:1px solid rgba(71,67,59,.10);
+  border-radius:12px;
+  background:rgba(247,245,237,.76);
+  box-shadow:0 8px 30px rgba(62,58,50,.055);
+  color:#77736a;
+  font:8px/1.45 ui-monospace,SFMono-Regular,Menlo,monospace;
+  letter-spacing:.025em;
+  pointer-events:none;
+  transition:opacity .35s ease,transform .35s ease;
+}
+.product-map-intro strong{display:block;margin-bottom:3px;color:#3d3a34;font-size:9px}
+.product-map-intro.fade{opacity:0;transform:translateY(8px)}
+
+#activityContext:empty::before{content:"Local map activity"}
+
+@media(max-width:760px){
+  header{padding-left:10px!important;padding-right:10px!important}
+  .presence{display:none!important}
+  .agent-demo-button span{display:none}
+  .agent-demo-button{width:31px;padding:0}
+  .product-map-intro{left:10px;right:10px;bottom:10px;max-width:none}
+}
+
+@media(prefers-reduced-motion:reduce){
+  #world,.product-map-intro{transition-duration:.001ms!important}
+}

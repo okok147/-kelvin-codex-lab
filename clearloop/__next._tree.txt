@@ -1,3 +1,3 @@
 :HL["/-kelvin-codex-lab/_next/static/chunks/0lzv7gpcgbgyk.css","style"]
 :HL["/-kelvin-codex-lab/_next/static/chunks/18d6~3mc9ng._.css","style"]
-0:{"tree":{"name":"","param":null,"prefetchHints":16,"slots":{"children":{"name":"clearloop","param":null,"prefetchHints":0,"slots":{"children":{"name":"__PAGE__","param":null,"prefetchHints":0,"slots":null}}}}},"staleTime":300,"buildId":"9J56QnnfH22EBMBRYQu2d"}
+0:{"tree":{"name":"","param":null,"prefetchHints":16,"slots":{"children":{"name":"clearloop","param":null,"prefetchHints":0,"slots":{"children":{"name":"__PAGE__","param":null,"prefetchHints":0,"slots":null}}}}},"staleTime":300,"buildId":"4_0WkLT1pSCIgOykDTt8V"}
