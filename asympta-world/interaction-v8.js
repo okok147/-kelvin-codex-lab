@@ -47,27 +47,11 @@
   document.getElementById("continue")?.addEventListener("click",clearIdle,true);
   new MutationObserver(()=>{if(hasDraft())clearIdle()}).observe(nodes,{childList:true,subtree:true});
 
-  function scaleFromWorld(){
-    try{const m=new DOMMatrixReadOnly(getComputedStyle(world).transform);return clamp(Math.abs(m.a)||1,.34,1.6)}catch{return 1}
-  }
+  // Keep zoom gestural and invisible: wheel/trackpad on desktop, pinch on touch.
+  // We dispatch into app.js' existing wheel handler so camera state stays unified.
   function emitZoom(deltaY,x,y){
     viewport.dispatchEvent(new WheelEvent("wheel",{deltaY,clientX:x,clientY:y,bubbles:true,cancelable:true}));
-    updateZoomLabelSoon();
   }
-  function viewportCenter(){const r=viewport.getBoundingClientRect();return{x:r.left+r.width/2,y:r.top+r.height/2}}
-  function installZoomControls(){
-    if(document.getElementById("zoomControls"))return;
-    const wrap=document.createElement("div");wrap.id="zoomControls";wrap.className="zoom-controls";wrap.setAttribute("aria-label","Canvas zoom controls");
-    wrap.innerHTML='<button id="zoomOut" type="button" aria-label="Zoom out">−</button><span id="zoomLevel" aria-live="polite">100%</span><button id="zoomIn" type="button" aria-label="Zoom in">+</button>';
-    document.body.append(wrap);
-    document.getElementById("zoomOut").onclick=()=>{const c=viewportCenter();emitZoom(220,c.x,c.y)};
-    document.getElementById("zoomIn").onclick=()=>{const c=viewportCenter();emitZoom(-220,c.x,c.y)};
-    updateZoomLabel();
-  }
-  function updateZoomLabel(){const el=document.getElementById("zoomLevel");if(el)el.textContent=`${Math.round(scaleFromWorld()*100)}%`}
-  let zoomLabelRAF=0;
-  function updateZoomLabelSoon(){cancelAnimationFrame(zoomLabelRAF);zoomLabelRAF=requestAnimationFrame(updateZoomLabel)}
-  viewport.addEventListener("wheel",updateZoomLabelSoon,{passive:true});
 
   const touches=new Map();let pinch=null;
   const distance=(a,b)=>Math.hypot(a.x-b.x,a.y-b.y);
@@ -75,18 +59,29 @@
   viewport.addEventListener("pointerdown",event=>{
     if(event.pointerType!=="touch")return;
     touches.set(event.pointerId,{x:event.clientX,y:event.clientY});
-    if(touches.size===2){const [a,b]=[...touches.values()];pinch={distance:Math.max(1,distance(a,b))};event.stopImmediatePropagation()}
+    if(touches.size===2){
+      const [a,b]=[...touches.values()];
+      pinch={distance:Math.max(1,distance(a,b))};
+      event.stopImmediatePropagation();
+    }
   },true);
   viewport.addEventListener("pointermove",event=>{
     if(event.pointerType!=="touch"||!touches.has(event.pointerId))return;
     touches.set(event.pointerId,{x:event.clientX,y:event.clientY});
     if(!pinch||touches.size<2)return;
     const [a,b]=[...touches.values()],d=Math.max(1,distance(a,b)),ratio=d/pinch.distance;
-    if(Math.abs(ratio-1)>.008){const mid=midpoint(a,b);emitZoom(clamp(-Math.log(ratio)/.0012,-320,320),mid.x,mid.y);pinch.distance=d}
+    if(Math.abs(ratio-1)>.008){
+      const mid=midpoint(a,b);
+      emitZoom(clamp(-Math.log(ratio)/.0012,-320,320),mid.x,mid.y);
+      pinch.distance=d;
+    }
     event.preventDefault();event.stopImmediatePropagation();
   },true);
-  function endTouch(event){if(event.pointerType!=="touch")return;touches.delete(event.pointerId);if(touches.size<2)pinch=null}
-  viewport.addEventListener("pointerup",endTouch,true);viewport.addEventListener("pointercancel",endTouch,true);
-
-  installZoomControls();
+  function endTouch(event){
+    if(event.pointerType!=="touch")return;
+    touches.delete(event.pointerId);
+    if(touches.size<2)pinch=null;
+  }
+  viewport.addEventListener("pointerup",endTouch,true);
+  viewport.addEventListener("pointercancel",endTouch,true);
 })();
