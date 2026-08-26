@@ -1,0 +1,8 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="theme-color" content="#EEEDE6"><meta name="description" content="Asympta World — every thought has a history."><title>Asympta World</title><link rel="stylesheet" href="./style.css"></head><body>
+<main id="app"><header><div class="brand"><b class="mark">●╱●╲●</b><div><strong>Asympta World</strong><small>Every thought has a history.</small></div></div><div class="actions"><button id="home" title="Home">⌂</button><button id="search">⌕ <span>Search the World</span><kbd>⌘K</kbd></button><div id="mcp"><i></i><span>Checking WebMCP</span></div></div></header>
+<section id="viewport"><div id="world"><svg id="edges" viewBox="0 0 3600 2400"></svg><div id="nodes"></div></div></section>
+<aside id="dock"><small>Selected thought</small><div id="dockText"></div><div><button id="trace">Trace history</button><button id="continue">Continue from here →</button></div></aside>
+<div class="hint">Drag to move · Scroll to zoom · Select a thought to continue it</div><button id="reset">Reset demo</button><div id="toast"></div>
+<div id="searchBox" class="overlay"><div class="panel"><div class="field">⌕ <input id="query" placeholder="Find a thought, author, or idea…"><kbd>esc</kbd></div><p>Search across every branch in this World.</p><div id="results"></div></div></div>
+<div id="debug" hidden><b>WebMCP debug</b><div>Detected <span id="det">no</span></div><div>Tools <span id="tools">0</span></div><div>Last <span id="last">—</span></div></div>
+</main><script src="./data.js"></script><script src="./app.js"></script></body></html>
