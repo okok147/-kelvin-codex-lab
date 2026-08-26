@@ -1,0 +1,165 @@
+(()=>{
+  "use strict";
+
+  const viewport=document.getElementById("viewport");
+  const world=document.getElementById("world");
+  const nodes=document.getElementById("nodes");
+  const dock=document.getElementById("dock");
+  if(!viewport||!world||!nodes||!dock)return;
+
+  const clamp=(v,l,h)=>Math.max(l,Math.min(h,v));
+  const reducedMotion=()=>matchMedia("(prefers-reduced-motion: reduce)").matches;
+
+  /* ------------------------------------------------------------
+     Calm idle selection
+     A selected context gets a brief moment of attention. If the
+     user does not start writing or use the dock, the chrome fades
+     away while the context remains in place. No graph work/timer
+     loops: this is one cancellable timeout per selection.
+  ------------------------------------------------------------ */
+  let idleTimer=0;
+  let selectedEl=null;
+
+  function clearIdle(){
+    clearTimeout(idleTimer);idleTimer=0;
+    document.documentElement.classList.remove("selection-idle-collapsing");
+    selectedEl?.classList.remove("selection-idle-soft");
+  }
+
+  function hasDraft(){return !!nodes.querySelector(".thought.draft")}
+
+  function collapseSelection(){
+    if(hasDraft()||!selectedEl||!selectedEl.isConnected)return;
+    document.documentElement.classList.add("selection-idle-collapsing");
+    selectedEl.classList.add("selection-idle-soft");
+    const delay=reducedMotion()?0:520;
+    setTimeout(()=>{
+      if(hasDraft())return clearIdle();
+      dock.classList.remove("show");
+      selectedEl?.classList.remove("sel");
+      selectedEl?.classList.remove("selection-idle-soft");
+      document.documentElement.classList.remove("selection-idle-collapsing");
+      selectedEl=null;
+    },delay);
+  }
+
+  function scheduleIdleSelection(el){
+    clearIdle();
+    selectedEl=el;
+    idleTimer=setTimeout(collapseSelection,reducedMotion()?700:1900);
+  }
+
+  nodes.addEventListener("click",event=>{
+    const thought=event.target.closest?.(".thought:not(.draft)");
+    if(!thought)return;
+    requestAnimationFrame(()=>scheduleIdleSelection(thought));
+  },true);
+
+  dock.addEventListener("pointerdown",clearIdle,true);
+  dock.addEventListener("focusin",clearIdle,true);
+  const continueButton=document.getElementById("continue");
+  continueButton?.addEventListener("click",clearIdle,true);
+
+  new MutationObserver(()=>{
+    if(hasDraft())clearIdle();
+  }).observe(nodes,{childList:true,subtree:true});
+
+  /* ------------------------------------------------------------
+     Zoom controls + pinch-to-zoom
+     Important: all zoom requests are converted into synthetic
+     WheelEvents and sent through app.js's existing wheel handler.
+     That keeps the app's private camera transform state canonical.
+  ------------------------------------------------------------ */
+  function scaleFromWorld(){
+    try{
+      const m=new DOMMatrixReadOnly(getComputedStyle(world).transform);
+      return clamp(Math.abs(m.a)||1,.34,1.6);
+    }catch{return 1}
+  }
+
+  function emitZoom(deltaY,x,y){
+    viewport.dispatchEvent(new WheelEvent("wheel",{
+      deltaY,
+      clientX:x,
+      clientY:y,
+      bubbles:true,
+      cancelable:true
+    }));
+    updateZoomLabelSoon();
+  }
+
+  function viewportCenter(){
+    const r=viewport.getBoundingClientRect();
+    return{x:r.left+r.width/2,y:r.top+r.height/2};
+  }
+
+  function installZoomControls(){
+    if(document.getElementById("zoomControls"))return;
+    const wrap=document.createElement("div");
+    wrap.id="zoomControls";
+    wrap.className="zoom-controls";
+    wrap.setAttribute("aria-label","Canvas zoom controls");
+    wrap.innerHTML='<button id="zoomOut" type="button" aria-label="Zoom out">−</button><span id="zoomLevel" aria-live="polite">100%</span><button id="zoomIn" type="button" aria-label="Zoom in">+</button>';
+    document.body.append(wrap);
+    document.getElementById("zoomOut").onclick=()=>{const c=viewportCenter();emitZoom(220,c.x,c.y)};
+    document.getElementById("zoomIn").onclick=()=>{const c=viewportCenter();emitZoom(-220,c.x,c.y)};
+    updateZoomLabel();
+  }
+
+  function updateZoomLabel(){
+    const el=document.getElementById("zoomLevel");
+    if(el)el.textContent=`${Math.round(scaleFromWorld()*100)}%`;
+  }
+  let zoomLabelRAF=0;
+  function updateZoomLabelSoon(){
+    cancelAnimationFrame(zoomLabelRAF);
+    zoomLabelRAF=requestAnimationFrame(updateZoomLabel);
+  }
+
+  viewport.addEventListener("wheel",updateZoomLabelSoon,{passive:true});
+
+  const touches=new Map();
+  let pinch=null;
+  const distance=(a,b)=>Math.hypot(a.x-b.x,a.y-b.y);
+  const midpoint=(a,b)=>({x:(a.x+b.x)/2,y:(a.y+b.y)/2});
+
+  viewport.addEventListener("pointerdown",event=>{
+    if(event.pointerType!=="touch")return;
+    touches.set(event.pointerId,{x:event.clientX,y:event.clientY});
+    if(touches.size===2){
+      const [a,b]=[...touches.values()];
+      pinch={distance:Math.max(1,distance(a,b))};
+      // Prevent the base canvas from treating the second finger as a new pan drag.
+      event.stopImmediatePropagation();
+    }
+  },true);
+
+  viewport.addEventListener("pointermove",event=>{
+    if(event.pointerType!=="touch"||!touches.has(event.pointerId))return;
+    touches.set(event.pointerId,{x:event.clientX,y:event.clientY});
+    if(!pinch||touches.size<2)return;
+    const [a,b]=[...touches.values()];
+    const d=Math.max(1,distance(a,b));
+    const ratio=d/pinch.distance;
+    if(Math.abs(ratio-1)>.008){
+      const mid=midpoint(a,b);
+      // Existing app uses exp(-deltaY*.0012), so logarithmic conversion
+      // makes pinch scaling feel consistent with trackpad/wheel zoom.
+      const deltaY=-Math.log(ratio)/.0012;
+      emitZoom(clamp(deltaY,-320,320),mid.x,mid.y);
+      pinch.distance=d;
+    }
+    event.preventDefault();
+    event.stopImmediatePropagation();
+  },true);
+
+  function endTouch(event){
+    if(event.pointerType!=="touch")return;
+    touches.delete(event.pointerId);
+    if(touches.size<2)pinch=null;
+  }
+  viewport.addEventListener("pointerup",endTouch,true);
+  viewport.addEventListener("pointercancel",endTouch,true);
+
+  installZoomControls();
+})();
