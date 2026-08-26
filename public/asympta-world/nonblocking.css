@@ -1,0 +1,10 @@
+/* Interaction chrome must never create a full-width invisible hit target over the canvas. */
+.mobile-draft-bar{width:min(330px,calc(100vw - 20px));pointer-events:none}
+.mobile-draft-bar button{pointer-events:auto;touch-action:manipulation}
+#dailyRoot{touch-action:manipulation}
+/* Draft only owns its visible card; surrounding canvas remains interactive. */
+.thought.draft{pointer-events:auto}
+@media(max-width:760px),(pointer:coarse){
+  .mobile-draft-bar{padding:6px;gap:6px}
+  .mobile-draft-bar button{min-height:44px}
+}
