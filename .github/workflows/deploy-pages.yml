@@ -29,6 +29,31 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
+      - name: Validate Asympta World runtime
+        run: |
+          set -euo pipefail
+          for file in public/asympta-world/*.js; do
+            node --check "$file"
+          done
+          for file in \
+            public/asympta-world/interaction.js \
+            public/asympta-world/simulation.js \
+            public/asympta-world/activity.js \
+            public/asympta-world/compass.js \
+            public/asympta-world/terminal.js \
+            public/asympta-world/mcp-status.js \
+            public/asympta-world/interaction.css \
+            public/asympta-world/simulation.css \
+            public/asympta-world/activity.css \
+            public/asympta-world/compass.css \
+            public/asympta-world/terminal.css; do
+            test -f "$file"
+          done
+          if grep -Eq 'interaction-v[0-9]|simulation-v[0-9]|[?&]v=[0-9]' public/asympta-world/index.html; then
+            echo "Asympta World index still references a versioned runtime"
+            exit 1
+          fi
+
       - name: Build static site
         run: npm run build:pages
         env:
