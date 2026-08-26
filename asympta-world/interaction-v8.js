@@ -9,9 +9,11 @@
 
   const clamp=(v,l,h)=>Math.max(l,Math.min(h,v));
   const reducedMotion=()=>matchMedia("(prefers-reduced-motion: reduce)").matches;
+  const coarse=()=>matchMedia("(pointer:coarse)").matches||innerWidth<=760;
 
   let idleTimer=0;
   let selectedEl=null;
+  let pointerHolding=false;
 
   function clearIdle(){
     clearTimeout(idleTimer);idleTimer=0;
@@ -20,11 +22,11 @@
   }
   function hasDraft(){return !!nodes.querySelector(".thought.draft")}
   function collapseSelection(){
-    if(hasDraft()||!selectedEl||!selectedEl.isConnected)return;
+    if(hasDraft()||pointerHolding||!selectedEl||!selectedEl.isConnected)return;
     document.documentElement.classList.add("selection-idle-collapsing");
     selectedEl.classList.add("selection-idle-soft");
     setTimeout(()=>{
-      if(hasDraft())return clearIdle();
+      if(hasDraft()||pointerHolding)return clearIdle();
       dock.classList.remove("show");
       selectedEl?.classList.remove("sel");
       selectedEl?.classList.remove("selection-idle-soft");
@@ -34,7 +36,8 @@
   }
   function scheduleIdleSelection(el){
     clearIdle();selectedEl=el;
-    idleTimer=setTimeout(collapseSelection,reducedMotion()?700:1900);
+    const delay=reducedMotion()?1800:(coarse()?9500:7000);
+    idleTimer=setTimeout(collapseSelection,delay);
   }
 
   nodes.addEventListener("click",event=>{
@@ -42,13 +45,23 @@
     if(!thought)return;
     requestAnimationFrame(()=>scheduleIdleSelection(thought));
   },true);
-  dock.addEventListener("pointerdown",clearIdle,true);
-  dock.addEventListener("focusin",clearIdle,true);
+
+  function holdSelection(){pointerHolding=true;clearIdle()}
+  function releaseSelection(){
+    pointerHolding=false;
+    if(selectedEl&&!hasDraft())scheduleIdleSelection(selectedEl);
+  }
+  dock.addEventListener("pointerenter",holdSelection,true);
+  dock.addEventListener("pointerleave",releaseSelection,true);
+  dock.addEventListener("pointerdown",holdSelection,true);
+  dock.addEventListener("pointerup",releaseSelection,true);
+  dock.addEventListener("focusin",holdSelection,true);
+  dock.addEventListener("focusout",releaseSelection,true);
   document.getElementById("continue")?.addEventListener("click",clearIdle,true);
   new MutationObserver(()=>{if(hasDraft())clearIdle()}).observe(nodes,{childList:true,subtree:true});
 
   // Keep zoom gestural and invisible: wheel/trackpad on desktop, pinch on touch.
-  // We dispatch into app.js' existing wheel handler so camera state stays unified.
+  // Planetary V10 intercepts only the farthest zoom band; normal zoom remains app.js-owned.
   function emitZoom(deltaY,x,y){
     viewport.dispatchEvent(new WheelEvent("wheel",{deltaY,clientX:x,clientY:y,bubbles:true,cancelable:true}));
   }
